@@ -1,0 +1,12 @@
+{
+  "name": "rs-gdrive",
+  "version": "1.0.0",
+  "description": "Rumsan Google Drive Utilities",
+  "author": "Rumsan Tech <team@rumsan.com>",
+  "source": "./src/index.js",
+  "main": "./src/index.js",
+  "dependencies": {
+    "google-spreadsheet": "^3.0.11",
+    "googleapis": "^52.1.0"
+  }
+}

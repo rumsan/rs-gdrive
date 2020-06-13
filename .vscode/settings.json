@@ -1,0 +1,11 @@
+{
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "prettier.trailingComma": "none",
+  "prettier.tabWidth": 2,
+  "prettier.semi": true,
+  "prettier.printWidth": 100,
+  "prettier.arrowParens": "avoid",
+  "workbench.panel.defaultLocation": "right",
+  "editor.minimap.enabled": false
+}
