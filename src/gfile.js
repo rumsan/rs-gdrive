@@ -2,6 +2,12 @@ const { google } = require("googleapis");
 const baseCls = require("./base");
 const gpermission = require("./gpermission");
 
+const queryBuilder = (query = "", newQuery) => {
+  query = query.trim();
+  if (query.length > 0) return query + " and " + newQuery;
+  else return newQuery;
+};
+
 module.exports = class extends baseCls {
   constructor(cfg) {
     super(cfg);
@@ -9,31 +15,51 @@ module.exports = class extends baseCls {
     this.permissionClient = new gpermission(cfg);
   }
 
-  async createFolder({ name, parents, parentId }) {
+  async createFolder({ name, parents = [], fields, permissions = [] }) {
+    if (!name) throw Error("Must send name");
     let fileMetadata = {
       name,
       mimeType: "application/vnd.google-apps.folder",
       parents: []
     };
-    if (parents) fileMetadata.parents = parents;
-    if (parentId) fileMetadata.parents.push(parentId);
-    return this.upload({ fileMetadata });
+    if (parents.length) fileMetadata.parents = parents;
+    return this.upload({ fileMetadata, fields, permissions });
   }
 
-  async list({ folderId, fields } = {}) {
-    let q = null;
-    if (folderId) q = `'${folderId}' in parents`;
-    fields =
-      fields || "nextPageToken, files(kind, id, name, modifiedTime, mimeType, webContentLink)";
-    return this.client.files.list({ folderId, fields, q });
+  async list({ parentId, fields, pageSize, orderBy, query } = {}, gfields) {
+    let q = query || "";
+    if (parentId) q = queryBuilder(q, `'${parentId}' in parents`);
+    fields = fields ? "," + fields : "";
+    fields = `nextPageToken, files(kind,id, name, modifiedTime,createdTime, mimeType, webContentLink, webViewLink, parents, thumbnailLink ${fields})`;
+    orderBy = orderBy || "modifiedTime desc";
+    let params = Object.assign({ fields, pageSize, orderBy, q }, gfields);
+    return this.client.files.list(params);
   }
 
-  async upload({ fileMetadata, media, fields }) {
-    return this.client.files.create({
+  async listOwned(params = {}, gfields) {
+    params.query = queryBuilder(params.query, "'me' in owners");
+    return this.list(params, gfields);
+  }
+
+  async listSharedWithMe(params = {}, gfields) {
+    params.query = queryBuilder(params.query, "sharedWithMe");
+    return this.list(params, gfields);
+  }
+
+  async upload({ fileMetadata, media, fields, permissions = [] }) {
+    let res = this.client.files.create({
       resource: fileMetadata,
       media,
       fields: fields || "id, name, webContentLink"
     });
+
+    if (permissions.length) {
+      await this.permissionClient.add(
+        Object.assign(permissions[0], { fileId: res.data.documentId })
+      );
+    }
+
+    return res;
   }
 
   async addFileToFolder(fileId, folderId) {
