@@ -26,16 +26,16 @@ module.exports = class extends baseCls {
 
   async createDocument(data) {
     let res = await this.client.documents.create({
-      title: data.title
+      title: data.name || data.title
     });
 
-    if (data.parentId) {
-      await this.fileClient.addFileToFolder(res.data.documentId, data.parentId);
+    if (data.parents) {
+      await this.fileClient.addFileToFolder(res.data.documentId, data.parents[0]);
     }
 
-    if (data.permission) {
+    if (data.permissions) {
       await this.permissionClient.add(
-        Object.assign(data.permission, { fileId: res.data.documentId })
+        Object.assign(data.permissions[0], { fileId: res.data.documentId })
       );
     }
 

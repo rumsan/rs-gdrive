@@ -47,16 +47,16 @@ module.exports = class extends baseCls {
   }
 
   async upload({ fileMetadata, media, fields, permissions = [] }) {
-    let res = this.client.files.create({
+    let res = await this.client.files.create({
       resource: fileMetadata,
       media,
-      fields: fields || "id, name, webContentLink"
+      fields:
+        fields ||
+        "kind,id, name, modifiedTime,createdTime, mimeType, webContentLink, webViewLink, parents, thumbnailLink"
     });
 
     if (permissions.length) {
-      await this.permissionClient.add(
-        Object.assign(permissions[0], { fileId: res.data.documentId })
-      );
+      await this.permissionClient.add(Object.assign(permissions[0], { fileId: res.data.id }));
     }
 
     return res;
